@@ -1,0 +1,49 @@
+- apt_repository:
+    repo: 'ppa:ondrej/php'
+    update_cache: 'yes'
+  become: yes
+
+- name: install php{{php_version}} extensions
+  apt:
+    pkg: "{{ packages }}"
+    state: latest
+    update_cache: true
+  vars:
+    prefix: "php{{php_version}}-"
+    packages: "{{ [prefix] | product(extensions) | map('join') | list }}"
+  become: yes
+
+- name: tweak php.ini configuration (cli)
+  lineinfile:
+    dest: /etc/php/{{php_version}}/cli/php.ini
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    backup: yes
+    backrefs: yes
+  with_items:
+    - { regexp: '^post_max_size =', line: 'post_max_size = 20M' }
+    - { regexp: '^upload_max_filesize', line: 'upload_max_filesize = 20M' }
+    - { regexp: '^;cgi.fix_pathinfo', line: 'cgi.fix_pathinfo = 0' }
+  become: yes
+  notify:
+    - restart php-fpm
+
+- name: tweak php.ini configuration (fpm)
+  lineinfile:
+    dest: /etc/php/{{php_version}}/fpm/php.ini
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    backup: yes
+    backrefs: yes
+  with_items:
+    - { regexp: '^post_max_size =', line: 'post_max_size = 20M' }
+    - { regexp: '^upload_max_filesize', line: 'upload_max_filesize = 20M' }
+    - { regexp: '^;cgi.fix_pathinfo', line: 'cgi.fix_pathinfo = 0' }
+  become: yes
+  notify:
+    - restart php-fpm
+
+- name: set default php version
+  command: update-alternatives --set php /usr/bin/php{{php_version}}
+  changed_when: false
+  become: yes

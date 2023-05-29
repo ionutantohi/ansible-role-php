@@ -1,0 +1,17 @@
+php_version: 8.1
+extensions:
+  - fpm
+  - cli
+  - mysql
+  - curl
+  - mbstring
+  - common
+  - gd
+  - imagick
+  - soap
+  - zip
+  - bcmath
+  - xml
+  - sqlite3
+  - intl
+
