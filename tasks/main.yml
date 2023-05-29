@@ -3,24 +3,14 @@
     update_cache: 'yes'
   become: yes
 
-- name: install php{{php_version}} default extensions
+- name: install php{{php_version}} extensions
   apt:
     pkg: "{{ packages }}"
     state: latest
     update_cache: true
   vars:
     prefix: "php{{php_version}}-"
-    packages: "{{ [prefix] | product(php_default_extensions) | map('join') | list }}"
-  become: yes
-
-- name: install php{{php_version}} extra extensions
-  apt:
-    pkg: "{{ packages }}"
-    state: latest
-    update_cache: true
-  vars:
-    prefix: "php{{php_version}}-"
-    packages: "{{ [prefix] | product(php_extra_extensions) | map('join') | list }}"
+    packages: "{{ [prefix] | product(php_default_extensions + php_extra_extensions) | map('join') | list }}"
   become: yes
 
 - name: tweak php.ini configuration (cli)
