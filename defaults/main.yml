@@ -10,5 +10,4 @@ php_default_extensions:
   - bcmath
   - xml
   - intl
-
 php_extra_extensions: []
