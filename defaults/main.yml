@@ -1,4 +1,4 @@
-php_version: 8.1
+php_version: 8.3
 php_default_extensions:
   - fpm
   - cli
@@ -10,4 +10,6 @@ php_default_extensions:
   - bcmath
   - xml
   - intl
+  - gd
+  - imagick
 php_extra_extensions: []
