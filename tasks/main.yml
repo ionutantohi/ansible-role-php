@@ -17,7 +17,7 @@
 
 - name: add sury repository
   apt_repository:
-    repo: deb [signed-by=/etc/apt/keyrings/sury.gpg] https://packages.sury.org/php/ {{ansible_distribution_release}} main
+    repo: deb [signed-by=/etc/apt/keyrings/sury.gpg] https://packages.sury.org/php {{ansible_distribution_release}} main
     filename: php
     state: present
     update_cache: yes
