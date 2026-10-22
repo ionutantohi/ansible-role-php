@@ -3,3 +3,9 @@
     name: php{{php_version}}-fpm
     state: restarted
   become: yes
+
+- name: restart unattended-upgrades
+  service:
+    name: unattended-upgrades
+    state: restarted
+  become: yes

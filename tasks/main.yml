@@ -1,7 +1,49 @@
-- apt_repository:
-    repo: 'ppa:ondrej/php'
-    update_cache: 'yes'
+- name: add directory for storing keys
+  file:
+    path: /etc/apt/keyrings
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
   become: yes
+
+- name: retrieve sury key
+  get_url:
+    url: https://packages.sury.org/php/apt.gpg
+    dest: /etc/apt/keyrings/sury.gpg
+    mode: 0644
+    force: true
+  become: yes
+
+- name: add sury repository
+  apt_repository:
+    repo: deb [signed-by=/etc/apt/keyrings/sury.gpg] https://packages.sury.org/php/ {{ansible_distribution_release}} main
+    filename: php
+    state: present
+    update_cache: yes
+  become: yes
+
+- name: set up pinning to ensure php's packages are used over the distribution provided one
+  copy:
+    content: |
+      Package: *
+      Pin: release o=deb.sury.org
+      Pin-Priority: 900
+    dest: /etc/apt/preferences.d/99php
+    owner: root
+    group: root
+    mode: 0644
+  become: yes
+
+- name: configure what should be updated in automatic updates
+  copy:
+    src: unattended-upgrades
+    dest: /etc/apt/apt.conf.d/55unattended-upgrades-php
+    mode: 0644
+    owner: root
+    group: root
+  become: yes
+  notify: restart unattended-upgrades
 
 - name: install php{{php_version}} extensions
   apt:
@@ -43,7 +85,14 @@
   notify:
     - restart php-fpm
 
-- name: set default php version
+- name: set default php version to {{php_version}}
   command: update-alternatives --set php /usr/bin/php{{php_version}}
   changed_when: false
+  become: yes
+
+- name: ensure php{{php_version}}-fpm service is running and enabled at boot
+  service:
+    name: php{{php_version}}-fpm
+    state: started
+    enabled: yes
   become: yes
