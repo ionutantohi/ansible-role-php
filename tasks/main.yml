@@ -47,6 +47,32 @@
   become: yes
   notify: restart unattended-upgrades
 
+- name: create php group
+  group:
+    name: php
+    system: yes
+    state: present
+  become: yes
+  notify: restart php-fpm
+
+- name: add php pool user to the php group
+  user:
+    name: "{{php_pool_user}}"
+    groups: php
+    append: yes
+  become: yes
+  notify: restart php-fpm
+
+- name: logging directory for php
+  file:
+    path: /var/log/php
+    state: directory
+    owner: root
+    group: php
+    mode: 0775
+  become: yes
+  notify: restart php-fpm
+
 - name: install php{{php_version}} extensions
   apt:
     pkg: "{{ packages }}"
@@ -56,36 +82,50 @@
     prefix: "php{{php_version}}-"
     packages: "{{ [prefix] | product(php_default_extensions + php_extra_extensions) | map('join') | list }}"
   become: yes
+  notify: restart php-fpm
 
-- name: tweak php.ini configuration (cli)
-  lineinfile:
-    dest: /etc/php/{{php_version}}/cli/php.ini
-    regexp: "{{ item.regexp }}"
-    line: "{{ item.line }}"
-    backup: yes
-    backrefs: yes
+- name: remove default config files
+  file:
+    path: "{{item}}"
+    state: absent
   with_items:
-    - { regexp: '^post_max_size =', line: 'post_max_size = 20M' }
-    - { regexp: '^upload_max_filesize', line: 'upload_max_filesize = 20M' }
-    - { regexp: '^;cgi.fix_pathinfo', line: 'cgi.fix_pathinfo = 0' }
+    - /etc/php/{{php_version}}/fpm/php-fpm.conf
+    - /etc/php/{{php_version}}/fpm/pool.d/www.conf
   become: yes
-  notify:
-    - restart php-fpm
+  notify: restart php-fpm
 
-- name: tweak php.ini configuration (fpm)
-  lineinfile:
-    dest: /etc/php/{{php_version}}/fpm/php.ini
-    regexp: "{{ item.regexp }}"
-    line: "{{ item.line }}"
-    backup: yes
-    backrefs: yes
+- name: configure php ini
+  template:
+    src: php.ini
+    dest: /etc/php/{{php_version}}/{{item}}/conf.d/99-overrides.ini
+    owner: root
+    group: root
+    mode: 0644
   with_items:
-    - { regexp: '^post_max_size =', line: 'post_max_size = 20M' }
-    - { regexp: '^upload_max_filesize', line: 'upload_max_filesize = 20M' }
-    - { regexp: '^;cgi.fix_pathinfo', line: 'cgi.fix_pathinfo = 0' }
+    - fpm
+    - cli
   become: yes
-  notify:
-    - restart php-fpm
+  notify: restart php-fpm
+
+- name: configure php fpm
+  template:
+    src: fpm.conf
+    dest: /etc/php/{{php_version}}/fpm/php-fpm.conf
+    owner: root
+    group: root
+    mode: 0644
+  become: yes
+  notify: restart php-fpm
+
+- name: configure php pool
+  template:
+    src: pool.conf
+    dest: /etc/php/{{php_version}}/fpm/pool.d/{{php_pool_name}}.conf
+    owner: root
+    group: root
+    mode: 0644
+  become: yes
+  notify: restart php-fpm
 
 - name: set default php version to {{php_version}}
   command: update-alternatives --set php /usr/bin/php{{php_version}}
