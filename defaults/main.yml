@@ -18,9 +18,14 @@ php_extra_extensions: []
 php_pool_name: www
 php_pool_user: www-data
 php_pool_max_children: 5
-php_pool_start_servers: 2
+php_pool_start_servers: 1
 php_pool_min_spare_servers: 1
 php_pool_max_spare_servers: 3
 php_pool_slowlog_timeout: 30
 php_ini_post_max_size: 20M
 php_ini_upload_max_filesize: 20M
+php_ini_opcache_enable: 1
+php_ini_opcache_memory_consumption: 128
+php_ini_opcache_interned_strings_buffer: 64
+php_ini_opcache_max_accelerated_files: 50000
+php_ini_opcache_validate_timestamps: 0
