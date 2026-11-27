@@ -53,6 +53,7 @@
     system: yes
     state: present
   become: yes
+  notify: restart php-fpm
 
 - name: add php pool user to the php group
   user:
@@ -60,6 +61,7 @@
     groups: php
     append: yes
   become: yes
+  notify: restart php-fpm
 
 - name: logging directory for php
   file:
@@ -69,6 +71,7 @@
     group: php
     mode: 0775
   become: yes
+  notify: restart php-fpm
 
 - name: install php{{php_version}} extensions
   apt:
