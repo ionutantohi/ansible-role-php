@@ -22,3 +22,5 @@ php_pool_start_servers: 2
 php_pool_min_spare_servers: 1
 php_pool_max_spare_servers: 3
 php_pool_slowlog_timeout: 30
+php_ini_post_max_size: 20M
+php_ini_upload_max_filesize: 20M

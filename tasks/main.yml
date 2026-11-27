@@ -84,36 +84,6 @@
   become: yes
   notify: restart php-fpm
 
-- name: tweak php.ini configuration (cli)
-  lineinfile:
-    dest: /etc/php/{{php_version}}/cli/php.ini
-    regexp: "{{ item.regexp }}"
-    line: "{{ item.line }}"
-    backup: yes
-    backrefs: yes
-  with_items:
-    - { regexp: '^post_max_size =', line: 'post_max_size = 20M' }
-    - { regexp: '^upload_max_filesize', line: 'upload_max_filesize = 20M' }
-    - { regexp: '^;cgi.fix_pathinfo', line: 'cgi.fix_pathinfo = 0' }
-  become: yes
-  notify:
-    - restart php-fpm
-
-- name: tweak php.ini configuration (fpm)
-  lineinfile:
-    dest: /etc/php/{{php_version}}/fpm/php.ini
-    regexp: "{{ item.regexp }}"
-    line: "{{ item.line }}"
-    backup: yes
-    backrefs: yes
-  with_items:
-    - { regexp: '^post_max_size =', line: 'post_max_size = 20M' }
-    - { regexp: '^upload_max_filesize', line: 'upload_max_filesize = 20M' }
-    - { regexp: '^;cgi.fix_pathinfo', line: 'cgi.fix_pathinfo = 0' }
-  become: yes
-  notify:
-    - restart php-fpm
-
 - name: remove default config files
   file:
     path: "{{item}}"
@@ -121,6 +91,19 @@
   with_items:
     - /etc/php/{{php_version}}/fpm/php-fpm.conf
     - /etc/php/{{php_version}}/fpm/pool.d/www.conf
+  become: yes
+  notify: restart php-fpm
+
+- name: configure php ini
+  template:
+    src: php.ini
+    dest: /etc/php/{{php_version}}/{{item}}/conf.d/99-overrides.ini
+    owner: root
+    group: root
+    mode: 0644
+  with_items:
+    - fpm
+    - cli
   become: yes
   notify: restart php-fpm
 
