@@ -47,6 +47,29 @@
   become: yes
   notify: restart unattended-upgrades
 
+- name: create php group
+  group:
+    name: php
+    system: yes
+    state: present
+  become: yes
+
+- name: add php pool user to the php group
+  user:
+    name: "{{php_pool_user}}"
+    groups: php
+    append: yes
+  become: yes
+
+- name: logging directory for php
+  file:
+    path: /var/log/php
+    state: directory
+    owner: root
+    group: php
+    mode: 0775
+  become: yes
+
 - name: install php{{php_version}} extensions
   apt:
     pkg: "{{ packages }}"
@@ -86,6 +109,36 @@
   become: yes
   notify:
     - restart php-fpm
+
+- name: remove default config files
+  file:
+    path: "{{item}}"
+    state: absent
+  with_items:
+    - /etc/php/{{php_version}}/fpm/php-fpm.conf
+    - /etc/php/{{php_version}}/fpm/pool.d/www.conf
+  become: yes
+  notify: restart php-fpm
+
+- name: configure php fpm
+  template:
+    src: fpm.conf
+    dest: /etc/php/{{php_version}}/fpm/php-fpm.conf
+    owner: root
+    group: root
+    mode: 0644
+  become: yes
+  notify: restart php-fpm
+
+- name: configure php pool
+  template:
+    src: pool.conf
+    dest: /etc/php/{{php_version}}/fpm/pool.d/{{php_pool_name}}.conf
+    owner: root
+    group: root
+    mode: 0644
+  become: yes
+  notify: restart php-fpm
 
 - name: set default php version to {{php_version}}
   command: update-alternatives --set php /usr/bin/php{{php_version}}
